@@ -1,0 +1,44 @@
+{
+  "name": "jurai",
+  "version": "0.1.0",
+  "description": "Teste les skills Claude Code d'un repo avec Jev (TypeSafe AI) : chaque _test.yml compare le skill à sa version sur la branche principale.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vbarrai/jurai.git"
+  },
+  "homepage": "https://github.com/vbarrai/jurai#readme",
+  "bugs": "https://github.com/vbarrai/jurai/issues",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "testing",
+    "jev",
+    "llm-judge"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "jurai": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "jurai": "node src/cli.ts",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ai": "^7.0.114",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^7.0.2"
+  }
+}

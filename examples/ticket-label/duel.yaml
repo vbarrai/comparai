@@ -1,0 +1,6 @@
+skill-a: ./skills/labeler-v1
+skill-b: ./skills/labeler-v2
+tests:
+  - Le skill doit choisir un label pour le ticket
+  - Si le ticket est un bug, le label doit etre fix
+  - Si le ticket n'est pas classable, le label doit etre chore

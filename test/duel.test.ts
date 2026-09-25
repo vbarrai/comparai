@@ -9,7 +9,22 @@ import { findTestFiles, loadDuel, loadSkill, MAIN_BRANCH, mainBranch, NotInRevis
 import { regressions, runDuel, sameContent } from "../src/duel.ts";
 import { buildState } from "../src/jev.ts";
 
-const example = path.join(import.meta.dirname, "../examples/ticket-label/duel.yaml");
+/** Duel de test : labeler-v1 (SKILL.md seul) contre labeler-v2 (avec taxonomie, un fichier caché et un binaire). */
+function fixture(): string {
+  const root = mkdtempSync(path.join(os.tmpdir(), "jurai-"));
+  const write = (p: string, content: string | Buffer) => {
+    mkdirSync(path.dirname(path.join(root, p)), { recursive: true });
+    writeFileSync(path.join(root, p), content);
+  };
+  write("skills/labeler-v1/SKILL.md", "Choisis un label.");
+  write("skills/labeler-v2/SKILL.md", "Choisis un label de references/taxonomy.md.");
+  write("skills/labeler-v2/references/taxonomy.md", "bug, feature");
+  write("skills/labeler-v2/.notes.md", "caché");
+  write("skills/labeler-v2/logo.png", Buffer.from([0x89, 0x50, 0x00, 0x01]));
+  write("duel.yaml", "skill-a: ./skills/labeler-v1\nskill-b: ./skills/labeler-v2\ntests:\n  - t1\n  - t2\n  - t3\n");
+  return path.join(root, "duel.yaml");
+}
+const example = fixture();
 
 /** Faux Jev : `pick(state)` renvoie la position 0–4 et P(skill_1 respecte), P(skill_2 respecte). */
 function mockJev(pick: (state: any) => [number, number, number]) {
@@ -29,11 +44,10 @@ function mockJev(pick: (state: any) => [number, number, number]) {
 
 const hasTaxonomy = (skill: { path: string }[]) => skill.some((f) => f.path === "references/taxonomy.md");
 
-test("lecture du YAML et des skills (SKILL.md en premier)", async () => {
+test("lecture du YAML et des skills (SKILL.md en premier, ni caché ni binaire)", async () => {
   const duel = await loadDuel(example);
   assert.equal(duel.a.name, "labeler-v1");
-  assert.equal(duel.b.files[0].path, "SKILL.md");
-  assert.ok(hasTaxonomy(duel.b.files));
+  assert.deepEqual(duel.b.files.map((f) => f.path), ["SKILL.md", "references/taxonomy.md"], "fichiers cachés et binaires exclus");
   assert.equal(duel.tests.length, 3);
 });
 

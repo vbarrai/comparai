@@ -144,11 +144,10 @@ src/config.ts   lecture du YAML et des skills (disque, révision git, GitHub)
 src/jev.ts      state, questions, appel à Jev
 src/duel.ts     les deux ordres, curseur, cohérence, régressions
 test/           tests avec un faux Jev (sans réseau)
-examples/       skills et duels d'exemple
 ```
 
 ```bash
 npm test && npm run typecheck
-npm run jurai -- examples/ticket-label/duel.yaml   # lance la CLI depuis les sources
+npm run jurai -- <chemin>   # lance la CLI depuis les sources
 npm pack                                                # compile dans dist/ puis crée l'archive
 ```

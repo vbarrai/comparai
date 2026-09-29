@@ -89,7 +89,7 @@ const ICONS: Record<Status, string> = {
 };
 
 /**
- * `jurai [chemins…]` : chaque chemin est un fichier de tests ou un dossier
+ * `comparai [chemins…]` : chaque chemin est un fichier de tests ou un dossier
  * dans lequel chercher tous les `_test.yml` (par défaut, le dossier courant).
  */
 async function main(): Promise<number> {

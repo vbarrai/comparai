@@ -1,6 +1,6 @@
-# jurai
+# comparai
 
-Un jury pour vos skills Claude Code : des tests à la manière de vitest. On décrit dans un `_test.yml` ce qu'un skill doit faire. À chaque modification, `jurai` vérifie que la nouvelle version ne fait pas moins bien que celle de la branche principale.
+Des tests pour vos skills Claude Code, à la manière de vitest. On décrit dans un `_test.yml` ce qu'un skill doit faire. À chaque modification, `comparai` vérifie que la nouvelle version ne fait pas moins bien que celle de la branche principale.
 
 Le juge est **[Jev](https://vercel.com/ai-gateway/models/jev)** (`typesafe-ai/jev`, TypeSafe AI). Il ne génère pas de texte : il renvoie des réponses typées (score, booléen) en moins d'une seconde, pour 0,042 $ par million de tokens en entrée. Les skills **ne sont pas exécutés** : Jev lit leurs instructions et estime laquelle des deux versions conduit le mieux un agent à respecter chaque exigence.
 
@@ -9,7 +9,7 @@ Le juge est **[Jev](https://vercel.com/ai-gateway/models/jev)** (`typesafe-ai/je
 Dans le repo qui contient vos skills :
 
 ```bash
-npm install -D jurai
+npm install -D comparai
 echo "AI_GATEWAY_API_KEY=vck_…" >> .env.local   # clé Vercel AI Gateway ; pensez à ignorer .env.local dans git
 ```
 
@@ -39,12 +39,12 @@ Chaque test est une exigence. Le duel compare **A = le dossier tel qu'il est** (
 ## Lancer les tests
 
 ```bash
-npx jurai                     # tous les _test.yml du repo (hors node_modules et dossiers cachés)
-npx jurai skills/x            # sous un dossier
-npx jurai skills/x/_test.yml  # un fichier
+npx comparai                     # tous les _test.yml du repo (hors node_modules et dossiers cachés)
+npx comparai skills/x            # sous un dossier
+npx comparai skills/x/_test.yml  # un fichier
 ```
 
-Ou dans le `package.json` : `"scripts": { "test:skills": "jurai" }`.
+Ou dans le `package.json` : `"scripts": { "test:skills": "comparai" }`.
 
 ```
 skills/collaborai-pr/_test.yml
@@ -78,7 +78,7 @@ Le checkout par défaut ne récupère que la branche testée : il faut aussi ré
 name: skills
 on: pull_request
 jobs:
-  jurai:
+  comparai:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +87,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npx jurai
+      - run: npx comparai
         env:
           AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
 ```
@@ -112,7 +112,7 @@ Jev juge l'impression d'ensemble si on le laisse faire. Une version mieux struct
 
 ## Comparer deux skills quelconques
 
-`skill-a` et `skill-b` peuvent être précisés, et le fichier peut alors porter n'importe quel nom (`npx jurai mon-duel.yaml`) :
+`skill-a` et `skill-b` peuvent être précisés, et le fichier peut alors porter n'importe quel nom (`npx comparai mon-duel.yaml`) :
 
 ```yaml
 skill-a: ./skills/labeler-v2                                    # dossier local, relatif au YAML
@@ -148,6 +148,6 @@ test/           tests avec un faux Jev (sans réseau)
 
 ```bash
 npm test && npm run typecheck
-npm run jurai -- <chemin>   # lance la CLI depuis les sources
+npm run comparai -- <chemin>   # lance la CLI depuis les sources
 npm pack                                                # compile dans dist/ puis crée l'archive
 ```

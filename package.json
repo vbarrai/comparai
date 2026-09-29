@@ -1,13 +1,13 @@
 {
-  "name": "jurai",
+  "name": "comparai",
   "version": "0.1.0",
   "description": "Teste les skills Claude Code d'un repo avec Jev (TypeSafe AI) : chaque _test.yml compare le skill à sa version sur la branche principale.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vbarrai/jurai.git"
+    "url": "git+https://github.com/vbarrai/comparai.git"
   },
-  "homepage": "https://github.com/vbarrai/jurai#readme",
-  "bugs": "https://github.com/vbarrai/jurai/issues",
+  "homepage": "https://github.com/vbarrai/comparai#readme",
+  "bugs": "https://github.com/vbarrai/comparai/issues",
   "keywords": [
     "claude-code",
     "skills",
@@ -18,7 +18,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "jurai": "./dist/cli.js"
+    "comparai": "./dist/cli.js"
   },
   "files": [
     "dist"
@@ -28,8 +28,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "prepack": "npm run build",
-    "jurai": "node src/cli.ts",
+    "prepare": "npm run build",
+    "comparai": "node src/cli.ts",
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },

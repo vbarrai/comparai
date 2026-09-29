@@ -11,7 +11,7 @@ import { buildState } from "../src/jev.ts";
 
 /** Duel de test : labeler-v1 (SKILL.md seul) contre labeler-v2 (avec taxonomie, un fichier caché et un binaire). */
 function fixture(): string {
-  const root = mkdtempSync(path.join(os.tmpdir(), "jurai-"));
+  const root = mkdtempSync(path.join(os.tmpdir(), "comparai-"));
   const write = (p: string, content: string | Buffer) => {
     mkdirSync(path.dirname(path.join(root, p)), { recursive: true });
     writeFileSync(path.join(root, p), content);
@@ -99,7 +99,7 @@ test("skill GitHub : arborescence filtrée sur le dossier, fichiers lus via l'AP
 
 /** Repo git temporaire dont la branche principale s'appelle `branch`, avec un skill commité. */
 function tempRepo(branch: string) {
-  const root = mkdtempSync(path.join(os.tmpdir(), "jurai-"));
+  const root = mkdtempSync(path.join(os.tmpdir(), "comparai-"));
   const git = (...args: string[]) => execFileSync("git", args, { cwd: root, stdio: "ignore" });
   const write = (p: string, text: string) => {
     mkdirSync(path.dirname(path.join(root, p)), { recursive: true });

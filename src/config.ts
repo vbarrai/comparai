@@ -96,7 +96,7 @@ async function loadFromGit(dir: string, ref: string, exclude?: string): Promise<
 async function github(url: string, accept: string): Promise<Response> {
   const token = process.env.GITHUB_TOKEN;
   const res = await fetch(url, {
-    headers: { Accept: accept, "User-Agent": "jurai", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers: { Accept: accept, "User-Agent": "comparai", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   if (!res.ok) throw new Error(`GitHub a répondu ${res.status} pour ${url}`);
   return res;

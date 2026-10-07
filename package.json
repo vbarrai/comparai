@@ -1,6 +1,6 @@
 {
   "name": "comparai",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Teste les skills Claude Code d'un repo avec Jev (TypeSafe AI) : chaque _test.yml compare le skill à sa version sur la branche principale.",
   "repository": {
     "type": "git",

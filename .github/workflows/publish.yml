@@ -29,4 +29,10 @@ jobs:
       - run: npm ci # lance aussi « prepare » (build)
       - run: npm run typecheck
       - run: npm test
+      - name: npm ne corrige pas le package.json (sinon il retire en silence, par exemple, le bin)
+        run: |
+          if npm publish --dry-run --ignore-scripts 2>&1 | tee /dev/stderr | grep -q "auto-corrected"; then
+            echo "::error::npm corrige le package.json à la publication : lancer « npm pkg fix » et vérifier le diff."
+            exit 1
+          fi
       - run: npm publish

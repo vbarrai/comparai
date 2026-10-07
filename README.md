@@ -151,3 +151,16 @@ npm test && npm run typecheck
 npm run comparai -- <chemin>   # lance la CLI depuis les sources
 npm pack                                                # compile dans dist/ puis crée l'archive
 ```
+
+### Publication
+
+Pousser un tag `v<version>` publie le paquet sur npm (`.github/workflows/publish.yml`), après typecheck et tests. Le tag doit correspondre à la version du `package.json` :
+
+```bash
+npm version patch        # ou minor / major : met à jour package.json, commit et tag
+git push --follow-tags
+```
+
+La publication passe par le [trusted publishing](https://docs.npmjs.com/trusted-publishers) de npm (OIDC, sans jeton). Sur npmjs.com, dans les réglages du paquet, déclarer le trusted publisher GitHub Actions : dépôt `vbarrai/comparai`, workflow `publish.yml`.
+
+Ces réglages n'existent qu'une fois le paquet créé : la toute première version se publie à la main (`npm login && npm publish`).

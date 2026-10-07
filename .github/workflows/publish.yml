@@ -1,0 +1,32 @@
+# Publie le paquet sur npm à chaque tag « v* » (ex. : npm version patch && git push --follow-tags).
+# Authentification par trusted publishing (OIDC) : aucun jeton npm stocké dans GitHub,
+# provenance signée automatiquement. Le trusted publisher doit être déclaré sur npmjs.com.
+name: publish
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write # OIDC pour npm
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # npm ≥ 11.5.1, requis pour le trusted publishing
+          registry-url: https://registry.npmjs.org
+      - name: Tag et version du package.json concordent
+        run: |
+          version="v$(node -p 'require("./package.json").version')"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Le tag $GITHUB_REF_NAME ne correspond pas à la version $version du package.json."
+            exit 1
+          fi
+      - run: npm ci # lance aussi « prepare » (build)
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm publish

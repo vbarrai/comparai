@@ -7,7 +7,7 @@ import { parse } from "yaml";
 const exec = promisify(execFile);
 
 export interface Skill {
-  /** Nom affiché dans le résumé (jamais envoyé à Jev). */
+  /** Name shown in the summary (never sent to Jev). */
   name: string;
   files: { path: string; content: string }[];
 }
@@ -18,24 +18,24 @@ export interface Duel {
   tests: string[];
 }
 
-/** Le dossier du skill n'existe pas dans la révision demandée (typiquement : nouveau skill, pas encore sur la branche principale). */
+/** The skill directory does not exist in the requested revision (typically: a new skill, not yet on the main branch). */
 export class NotInRevision extends Error {}
 
-/** Révision spéciale : la branche principale du repo, déduite au moment du chargement (voir `mainBranch`). */
+/** Special revision: the repo's main branch, resolved at load time (see `mainBranch`). */
 export const MAIN_BRANCH = "@main-branch";
 
 /**
- * Où trouver un skill :
- * - `local` : un dossier, dans son état actuel ou (avec `ref`) tel qu'il est dans une révision git ;
- * - `github` : un dossier d'un repo GitHub (`repo` = owner/repo), sur la branche par défaut ou `ref`.
+ * Where to find a skill:
+ * - `local`: a directory, in its current state or (with `ref`) as it is in a git revision;
+ * - `github`: a directory of a GitHub repo (`repo` = owner/repo), on the default branch or `ref`.
  */
 export type SkillSource =
   | { kind: "local"; dir: string; ref?: string }
   | { kind: "github"; repo: string; dir: string; ref?: string };
 
 /**
- * Garde les fichiers texte (SKILL.md en premier), sauf les fichiers et dossiers cachés et `exclude`.
- * `read` lit un fichier à partir de son chemin relatif au skill (« / » comme séparateur).
+ * Keeps text files (SKILL.md first), except hidden files and directories and `exclude`.
+ * `read` reads a file from its path relative to the skill ("/" as separator).
  */
 async function buildSkill(
   name: string,
@@ -51,7 +51,7 @@ async function buildSkill(
   const files = [];
   for (const p of kept) {
     const buffer = await read(p);
-    if (buffer.includes(0)) continue; // binaire
+    if (buffer.includes(0)) continue; // binary
     files.push({ path: p, content: buffer.toString("utf8") });
   }
   return { name, files };
@@ -67,13 +67,13 @@ async function loadFromDisk(dir: string, exclude?: string): Promise<Skill> {
   return buildSkill(path.basename(dir), paths, (p) => readFile(path.join(dir, p)), exclude);
 }
 
-/** Le dossier tel qu'il est dans la révision git `ref` (branche, tag, commit). */
+/** The directory as it is in git revision `ref` (branch, tag, commit). */
 async function loadFromGit(dir: string, ref: string, exclude?: string): Promise<Skill> {
   const git = async (...args: string[]) =>
     (await exec("git", args, { cwd: dir, encoding: "buffer", maxBuffer: 64 * 1024 * 1024 })).stdout;
   const name = `${path.basename(dir)}#${ref}`;
 
-  // Chemin du dossier depuis la racine du repo, avec « / » final (vide à la racine).
+  // Directory path from the repo root, with a trailing "/" (empty at the root).
   const prefix = (
     await git("rev-parse", "--show-prefix").catch(() => {
       throw new Error(`${dir} n'est pas dans un repo git (nécessaire pour « #${ref} »).`);
@@ -92,7 +92,7 @@ async function loadFromGit(dir: string, ref: string, exclude?: string): Promise<
 }
 
 
-/** Appel à l'API GitHub ; GITHUB_TOKEN (optionnel) donne accès aux repos privés et relève la limite d'appels. */
+/** GitHub API call; GITHUB_TOKEN (optional) grants access to private repos and raises the rate limit. */
 async function github(url: string, accept: string): Promise<Response> {
   const token = process.env.GITHUB_TOKEN;
   const res = await fetch(url, {
@@ -121,8 +121,8 @@ async function loadFromGithub(repo: string, dir: string, ref = "HEAD"): Promise<
 }
 
 /**
- * Branche principale du repo qui contient `dir` : la branche par défaut de `origin`, sinon `main`, sinon `master`.
- * Utilise la branche locale si elle existe, sinon sa copie distante (`origin/…`).
+ * Main branch of the repo containing `dir`: the default branch of `origin`, else `main`, else `master`.
+ * Uses the local branch if it exists, otherwise its remote-tracking copy (`origin/…`).
  */
 export async function mainBranch(dir: string): Promise<string> {
   const git = async (...args: string[]) => (await exec("git", args, { cwd: dir })).stdout.trim();
@@ -139,7 +139,7 @@ export async function mainBranch(dir: string): Promise<string> {
   );
 }
 
-/** `configFile` est exclu du skill s'il se trouve dans son dossier (fichier de tests rangé avec le skill). */
+/** `configFile` is excluded from the skill if it sits in its directory (test file stored next to the skill). */
 export async function loadSkill(source: SkillSource, configFile?: string): Promise<Skill> {
   if (source.kind === "github") return loadFromGithub(source.repo, source.dir, source.ref);
   const rel = configFile && path.relative(source.dir, configFile);
@@ -152,9 +152,9 @@ export async function loadSkill(source: SkillSource, configFile?: string): Promi
 const isLocal = (location: string) => /^\.{0,2}(\/|$)/.test(location);
 
 /**
- * Lit une référence de skill, avec une révision optionnelle après `#` :
- * - chemin local (`.`, `./…`, `../…`, `/…`), relatif au fichier de tests : `./skills/x`, `.#master` ;
- * - GitHub `owner/repo/chemin` : `vbarrai/config/skills/x`, `vbarrai/config/skills/x#dev`.
+ * Parses a skill reference, with an optional revision after `#`:
+ * - local path (`.`, `./…`, `../…`, `/…`), relative to the test file: `./skills/x`, `.#master`;
+ * - GitHub `owner/repo/path`: `vbarrai/config/skills/x`, `vbarrai/config/skills/x#dev`.
  */
 export function parseSource(value: unknown, key: string, baseDir: string): SkillSource {
   if (typeof value !== "string" || !value.trim()) {
@@ -172,9 +172,9 @@ export function parseSource(value: unknown, key: string, baseDir: string): Skill
 }
 
 /**
- * Valide le YAML : `tests` (liste non vide), `skill-a` et `skill-b`.
- * Par défaut, le fichier compare le dossier qui le contient (`skill-a: .`)
- * à ce même dossier sur la branche principale du repo (`skill-b: .#<branche principale>`).
+ * Validates the YAML: `tests` (non-empty list), `skill-a` and `skill-b`.
+ * By default, the file compares the directory that contains it (`skill-a: .`)
+ * with the same directory on the repo's main branch (`skill-b: .#<main branch>`).
  */
 export function parseDuel(raw: unknown, baseDir: string): { a: SkillSource; b: SkillSource; tests: string[] } {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -191,7 +191,7 @@ export function parseDuel(raw: unknown, baseDir: string): { a: SkillSource; b: S
 
 export const TEST_FILE = "_test.yml";
 
-/** Tous les fichiers `_test.yml` sous `root`, hors dossiers cachés et node_modules, triés. */
+/** Every `_test.yml` file under `root`, excluding hidden directories and node_modules, sorted. */
 export async function findTestFiles(root: string): Promise<string[]> {
   const found: string[] = [];
   const walk = async (dir: string): Promise<void> => {

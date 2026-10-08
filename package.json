@@ -1,7 +1,7 @@
 {
   "name": "comparai",
   "version": "0.1.1",
-  "description": "Teste les skills Claude Code d'un repo avec Jev (TypeSafe AI) : chaque _test.yml compare le skill à sa version sur la branche principale.",
+  "description": "Tests the Claude Code skills of a repo with Jev (TypeSafe AI): each _test.yml compares the skill against its version on the main branch.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vbarrai/comparai.git"

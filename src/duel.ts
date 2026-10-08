@@ -3,21 +3,21 @@ import { askJev, USD_PER_INPUT_TOKEN, type Model } from "./jev.ts";
 
 export interface TestResult {
   test: string;
-  /** Curseur du point de vue de B (0 = A nettement meilleur, 100 = B nettement meilleur), selon l'ordre de présentation. */
+  /** Cursor from B's point of view (0 = A clearly better, 100 = B clearly better), per presentation order. */
   ab: number;
   ba: number;
-  /** Moyenne des deux ordres. */
+  /** Mean of both orders. */
   score: number;
-  /** Les deux ordres tombent-ils du même côté (sous 40, 40–60, au-dessus de 60) ? */
+  /** Do both orders land on the same side (below 40, 40–60, above 60)? */
   consistent: boolean;
-  /** Probabilité moyenne, en %, que A (resp. B) respecte le test. */
+  /** Mean probability, in %, that A (resp. B) meets the test. */
   passA: number;
   passB: number;
 }
 
 export interface DuelResult {
   tests: TestResult[];
-  /** Moyenne des curseurs des tests. */
+  /** Mean of the tests' cursors. */
   score: number;
   costUsd: number;
   durationMs: number;
@@ -27,14 +27,14 @@ const side = (score: number) => (score < 40 ? -1 : score > 60 ? 1 : 0);
 const round = (value: number) => Math.round(value * 10) / 10;
 
 /**
- * Deux appels à Jev en parallèle : A présenté en premier, puis B.
- * Comparer les deux ordres révèle le biais de position ; le curseur final est leur moyenne.
+ * Two parallel calls to Jev: A presented first, then B.
+ * Comparing both orders reveals position bias; the final cursor is their mean.
  */
 export async function runDuel(duel: Duel, model: Model = "typesafe-ai/jev"): Promise<DuelResult> {
   const started = Date.now();
   const [ab, ba] = await Promise.all([
     askJev(duel.a, duel.b, duel.tests, model), // A = skill_1
-    askJev(duel.b, duel.a, duel.tests, model), // B = skill_1 : on inverse pour revenir au point de vue de B
+    askJev(duel.b, duel.a, duel.tests, model), // B = skill_1: inverted to get back to B's point of view
   ]);
 
   const tests = duel.tests.map((test, i): TestResult => {
@@ -61,12 +61,12 @@ export async function runDuel(duel: Duel, model: Model = "typesafe-ai/jev"): Pro
   };
 }
 
-/** Un test est une régression quand B (la référence, par défaut la branche principale) gagne nettement dans les deux ordres. */
+/** A test is a regression when B (the reference, by default the main branch) clearly wins in both orders. */
 export function regressions(result: DuelResult): TestResult[] {
   return result.tests.filter((t) => t.consistent && t.score > 60);
 }
 
-/** Deux skills au contenu identique : inutile d'appeler Jev. */
+/** Two skills with identical content: no need to call Jev. */
 export function sameContent(duel: Duel): boolean {
   return JSON.stringify(duel.a.files) === JSON.stringify(duel.b.files);
 }

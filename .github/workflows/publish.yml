@@ -1,6 +1,6 @@
-# Publie le paquet sur npm à chaque tag « v* » (ex. : npm version patch && git push --follow-tags).
-# Authentification par trusted publishing (OIDC) : aucun jeton npm stocké dans GitHub,
-# provenance signée automatiquement. Le trusted publisher doit être déclaré sur npmjs.com.
+# Publishes the package to npm on every "v*" tag (e.g. npm version patch && git push --follow-tags).
+# Authenticates through trusted publishing (OIDC): no npm token stored in GitHub,
+# provenance signed automatically. The trusted publisher must be declared on npmjs.com.
 name: publish
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # OIDC pour npm
+  id-token: write # OIDC for npm
 
 jobs:
   publish:
@@ -17,22 +17,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24 # npm ≥ 11.5.1, requis pour le trusted publishing
+          node-version: 24 # npm ≥ 11.5.1, required for trusted publishing
           registry-url: https://registry.npmjs.org
-      - name: Tag et version du package.json concordent
+      - name: Tag matches package.json version
         run: |
           version="v$(node -p 'require("./package.json").version')"
           if [ "$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::Le tag $GITHUB_REF_NAME ne correspond pas à la version $version du package.json."
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version."
             exit 1
           fi
-      - run: npm ci # lance aussi « prepare » (build)
+      - run: npm ci # also runs "prepare" (build)
       - run: npm run typecheck
       - run: npm test
-      - name: npm ne corrige pas le package.json (sinon il retire en silence, par exemple, le bin)
+      - name: npm does not auto-correct package.json (it would silently drop e.g. the bin)
         run: |
           if npm publish --dry-run --ignore-scripts 2>&1 | tee /dev/stderr | grep -q "auto-corrected"; then
-            echo "::error::npm corrige le package.json à la publication : lancer « npm pkg fix » et vérifier le diff."
+            echo "::error::npm auto-corrects package.json on publish: run \"npm pkg fix\" and review the diff."
             exit 1
           fi
       - run: npm publish

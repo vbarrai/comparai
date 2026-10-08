@@ -8,7 +8,7 @@ const color = process.stdout.isTTY && !process.env.NO_COLOR;
 const paint = (code: string) => (text: string) => (color ? `\x1b[${code}m${text}\x1b[0m` : text);
 const [bold, dim, blue, orange, red, green] = ["1", "2", "34", "33", "31", "32"].map(paint);
 
-/** Jauge 0–100 : le curseur ● se déplace de A (gauche) vers B (droite). */
+/** 0–100 gauge: the ● cursor moves from A (left) to B (right). */
 function gauge(score: number, width = 30): string {
   const pos = Math.round((score / 100) * (width - 1));
   const cells = Array.from({ length: width }, (_, i) => (i === pos ? bold("●") : i === width >> 1 ? dim("┼") : dim("─")));
@@ -49,7 +49,7 @@ function printResult(result: DuelResult): void {
 
 type Status = "inchangé" | "nouveau" | "ok" | "régression" | "erreur";
 
-/** Lance le duel d'un fichier de tests et l'affiche ; renvoie son statut pour le récapitulatif. */
+/** Runs and prints the duel of one test file; returns its status for the summary. */
 async function runFile(file: string): Promise<{ status: Status; detail?: string }> {
   console.log(`\n${bold(path.relative(process.cwd(), file) || file)}`);
   try {
@@ -89,11 +89,11 @@ const ICONS: Record<Status, string> = {
 };
 
 /**
- * `comparai [chemins…]` : chaque chemin est un fichier de tests ou un dossier
- * dans lequel chercher tous les `_test.yml` (par défaut, le dossier courant).
+ * `comparai [paths…]`: each path is a test file or a directory
+ * to search for every `_test.yml` (defaults to the current directory).
  */
 async function main(): Promise<number> {
-  // Les clés peuvent venir du shell (prioritaire), de .env.local ou de .env.
+  // Keys may come from the shell (takes precedence), .env.local or .env.
   for (const env of [".env.local", ".env"]) if (existsSync(env)) process.loadEnvFile(env);
 
   const targets = process.argv.slice(2);

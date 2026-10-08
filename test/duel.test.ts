@@ -9,7 +9,7 @@ import { findTestFiles, loadDuel, loadSkill, MAIN_BRANCH, mainBranch, NotInRevis
 import { regressions, runDuel, sameContent } from "../src/duel.ts";
 import { buildState } from "../src/jev.ts";
 
-/** Duel de test : labeler-v1 (SKILL.md seul) contre labeler-v2 (avec taxonomie, un fichier caché et un binaire). */
+/** Test duel: labeler-v1 (SKILL.md only) vs labeler-v2 (with a taxonomy, a hidden file and a binary). */
 function fixture(): string {
   const root = mkdtempSync(path.join(os.tmpdir(), "comparai-"));
   const write = (p: string, content: string | Buffer) => {
@@ -26,7 +26,7 @@ function fixture(): string {
 }
 const example = fixture();
 
-/** Faux Jev : `pick(state)` renvoie la position 0–4 et P(skill_1 respecte), P(skill_2 respecte). */
+/** Fake Jev: `pick(state)` returns the 0–4 position and P(skill_1 passes), P(skill_2 passes). */
 function mockJev(pick: (state: any) => [number, number, number]) {
   return new MockEvaluationModel({
     doEvaluate: async ({ state, questions }) => {
@@ -44,14 +44,14 @@ function mockJev(pick: (state: any) => [number, number, number]) {
 
 const hasTaxonomy = (skill: { path: string }[]) => skill.some((f) => f.path === "references/taxonomy.md");
 
-test("lecture du YAML et des skills (SKILL.md en premier, ni caché ni binaire)", async () => {
+test("reads the YAML and skills (SKILL.md first, no hidden or binary files)", async () => {
   const duel = await loadDuel(example);
   assert.equal(duel.a.name, "labeler-v1");
-  assert.deepEqual(duel.b.files.map((f) => f.path), ["SKILL.md", "references/taxonomy.md"], "fichiers cachés et binaires exclus");
+  assert.deepEqual(duel.b.files.map((f) => f.path), ["SKILL.md", "references/taxonomy.md"], "hidden and binary files excluded");
   assert.equal(duel.tests.length, 3);
 });
 
-test("références : local, local à une révision git, GitHub avec ou sans révision", () => {
+test("references: local, local at a git revision, GitHub with or without revision", () => {
   const src = (v: string) => parseSource(v, "skill-a", "/tmp/x");
   assert.deepEqual(src("./skills/a"), { kind: "local", dir: "/tmp/x/skills/a", ref: undefined });
   assert.deepEqual(src("."), { kind: "local", dir: "/tmp/x", ref: undefined });
@@ -61,19 +61,19 @@ test("références : local, local à une révision git, GitHub avec ou sans rév
   assert.throws(() => src(".#"), /révision vide/);
 });
 
-test("_test.yml réduit à « tests » : dossier courant contre la branche principale", () => {
+test("_test.yml with only \"tests\": current directory vs main branch", () => {
   const d = parseDuel({ tests: ["t"] }, "/repo/skills/x");
   assert.deepEqual(d.a, { kind: "local", dir: "/repo/skills/x", ref: undefined });
   assert.deepEqual(d.b, { kind: "local", dir: "/repo/skills/x", ref: MAIN_BRANCH });
 });
 
-test("erreurs de configuration explicites", () => {
+test("explicit configuration errors", () => {
   assert.throws(() => parseDuel({ "skill-a": 3, tests: ["t"] }, "/tmp"), /skill-a/);
   assert.throws(() => parseDuel({ "skill-a": "labeler", "skill-b": "./b", tests: ["t"] }, "/tmp"), /ni un chemin local/);
   assert.throws(() => parseDuel({ "skill-a": "./a", "skill-b": "./b", tests: [] }, "/tmp"), /tests/);
 });
 
-test("skill GitHub : arborescence filtrée sur le dossier, fichiers lus via l'API", async (t) => {
+test("GitHub skill: tree filtered to the directory, files read through the API", async (t) => {
   const tree = [
     { path: "README.md", type: "blob" },
     { path: "skills/pr/SKILL.md", type: "blob" },
@@ -97,7 +97,7 @@ test("skill GitHub : arborescence filtrée sur le dossier, fichiers lus via l'AP
   assert.equal(urls[1], "https://api.github.com/repos/owner/repo/contents/skills/pr/SKILL.md?ref=HEAD");
 });
 
-/** Repo git temporaire dont la branche principale s'appelle `branch`, avec un skill commité. */
+/** Temporary git repo whose main branch is named `branch`, with a committed skill. */
 function tempRepo(branch: string) {
   const root = mkdtempSync(path.join(os.tmpdir(), "comparai-"));
   const git = (...args: string[]) => execFileSync("git", args, { cwd: root, stdio: "ignore" });
@@ -115,14 +115,14 @@ function tempRepo(branch: string) {
   return { root, write };
 }
 
-test("_test.yml : copie de travail contre la branche principale (déduite), fichier de tests exclu", async () => {
+test("_test.yml: working copy vs (inferred) main branch, test file excluded", async () => {
   const { root, write } = tempRepo("master");
   const dir = path.join(root, "skills", "labeler");
   assert.equal(await mainBranch(dir), "master");
 
   let duel = await loadDuel(path.join(dir, "_test.yml"));
   assert.equal(duel.b.name, "labeler#master");
-  assert.ok(sameContent(duel), "rien n'a changé : pas besoin d'appeler Jev");
+  assert.ok(sameContent(duel), "nothing changed: no need to call Jev");
 
   write("skills/labeler/SKILL.md", "v2 (non commité)");
   duel = await loadDuel(path.join(dir, "_test.yml"));
@@ -138,14 +138,14 @@ test("_test.yml : copie de travail contre la branche principale (déduite), fich
   await assert.rejects(loadSkill({ kind: "local", dir, ref: "nope" }), /Révision git introuvable : « nope »/);
 });
 
-test("nouveau skill absent de la branche principale → NotInRevision", async () => {
+test("new skill missing from the main branch → NotInRevision", async () => {
   const { root, write } = tempRepo("main");
   write("skills/neuf/SKILL.md", "neuf");
   write("skills/neuf/_test.yml", "tests: [t]\n");
   await assert.rejects(loadDuel(path.join(root, "skills/neuf/_test.yml")), NotInRevision);
 });
 
-test("découverte des _test.yml, hors dossiers cachés et node_modules", async () => {
+test("discovers _test.yml files, excluding hidden directories and node_modules", async () => {
   const { root, write } = tempRepo("main");
   write("node_modules/pkg/_test.yml", "tests: [t]\n");
   write(".cache/_test.yml", "tests: [t]\n");
@@ -154,13 +154,13 @@ test("découverte des _test.yml, hors dossiers cachés et node_modules", async (
   assert.deepEqual(found, ["skills/autre/_test.yml", "skills/labeler/_test.yml"]);
 });
 
-test("le state n'envoie que le contenu, sous des noms neutres", async () => {
+test("the state only sends content, under neutral names", async () => {
   const duel = await loadDuel(example);
   const state = JSON.stringify(buildState(duel.a, duel.b));
   assert.ok(!state.includes("labeler-v1") && !state.includes("labeler-v2"));
 });
 
-test("B (avec taxonomie) toujours préféré, dans les deux ordres → 100, cohérent", async () => {
+test("B (with taxonomy) always preferred, in both orders → 100, consistent", async () => {
   const duel = await loadDuel(example);
   const model = mockJev((s) => (hasTaxonomy(s.skill_2) ? [4, 0.1, 0.9] : [0, 0.9, 0.1]));
   const result = await runDuel(duel, model);
@@ -170,11 +170,11 @@ test("B (avec taxonomie) toujours préféré, dans les deux ordres → 100, coh�
   assert.ok(Math.abs(result.costUsd - 2000 * 0.042e-6) < 1e-12);
 });
 
-test("biais de position pur (Jev préfère toujours skill_2) → 50, non fiable", async () => {
+test("pure position bias (Jev always prefers skill_2) → 50, unreliable", async () => {
   const duel = await loadDuel(example);
   const result = await runDuel(duel, mockJev(() => [4, 0.5, 0.5]));
   assert.equal(result.score, 50);
   assert.equal(result.tests[0].consistent, false);
   assert.deepEqual([result.tests[0].ab, result.tests[0].ba], [100, 0]);
-  assert.equal(regressions(result).length, 0, "un verdict non fiable n'est pas une régression");
+  assert.equal(regressions(result).length, 0, "an unreliable verdict is not a regression");
 });

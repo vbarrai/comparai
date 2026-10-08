@@ -5,10 +5,10 @@ type Options = Parameters<typeof evaluate>[0];
 export type Model = Options["model"];
 type Questions = Options["questions"];
 
-/** Tarif publié par TypeSafe : 0,042 $ par million de tokens en entrée, sortie gratuite. */
+/** TypeSafe's published price: $0.042 per million input tokens, output is free. */
 export const USD_PER_INPUT_TOKEN = 0.042 / 1_000_000;
 
-/** Limite du `state` de Jev (32 000 tokens), estimée à ≈ 4 caractères par token. */
+/** Jev's `state` limit (32,000 tokens), estimated at ≈ 4 characters per token. */
 const MAX_STATE_TOKENS = 32_000;
 
 const LEVELS = [
@@ -19,7 +19,7 @@ const LEVELS = [
   "skill_2 respecte nettement mieux l'exigence.",
 ];
 
-/** Les skills sont anonymisés (« skill_1 » / « skill_2 ») : seul le contenu des fichiers est envoyé. */
+/** Skills are anonymized ("skill_1" / "skill_2"): only file contents are sent. */
 export function buildState(first: Skill, second: Skill) {
   return {
     note:
@@ -30,7 +30,7 @@ export function buildState(first: Skill, second: Skill) {
   };
 }
 
-/** Par test : lequel respecte le mieux l'exigence (score 0–4), puis si chaque skill la respecte (booléens). */
+/** Per test: which one best meets the requirement (score 0–4), then whether each skill meets it (booleans). */
 export function buildQuestions(tests: string[]): Questions {
   const questions: Record<string, Questions[string]> = {};
   tests.forEach((test, i) => {
@@ -50,14 +50,14 @@ export function buildQuestions(tests: string[]): Questions {
 }
 
 export interface Answer {
-  /** Curseur 0–100 : 0 = skill_1 nettement meilleur, 100 = skill_2 nettement meilleur. */
+  /** 0–100 cursor: 0 = skill_1 clearly better, 100 = skill_2 clearly better. */
   score: number;
-  /** Probabilité que skill_1 (resp. skill_2) respecte l'exigence. */
+  /** Probability that skill_1 (resp. skill_2) meets the requirement. */
   pass1: number;
   pass2: number;
 }
 
-/** Un appel à Jev : toutes les questions de tous les tests en une requête. */
+/** One call to Jev: every question of every test in a single request. */
 export async function askJev(first: Skill, second: Skill, tests: string[], model: Model) {
   const state = buildState(first, second);
   const tokens = Math.ceil(JSON.stringify(state).length / 4);
